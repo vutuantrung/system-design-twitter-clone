@@ -1,0 +1,2 @@
+# Run the command to add sql file
+Get-Content C:\Users\trung\Documents\CSProjects\Personal-Project\NodeJS\system-design-twitter-clone\twitter_schema.sql | docker exec -i twitter_postgres psql -U trung -d twitter_db
