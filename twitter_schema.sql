@@ -64,38 +64,38 @@ CREATE INDEX idx_follows_follower ON follows(follower_id);
 CREATE INDEX idx_follows_followee ON follows(followee_id);
 
 
-INSERT INTO users (username, email, password_hash)
-VALUES (
-  'john_doe',
-  'john@example.com',
-  'hashed_password_example'
-)
-RETURNING *;
-INSERT INTO users (username, email, password_hash)
-VALUES (
-  'marie',
-  'marie@example.com',
-  'hashed_password_example'
-)
-RETURNING *;
-INSERT INTO users (username, email, password_hash)
-VALUES (
-  'simon',
-  'simon@example.com',
-  'hashed_password_example'
-)
-RETURNING *;
-INSERT INTO users (username, email, password_hash)
-VALUES (
-  'petter_parker',
-  'parker@example.com',
-  'hashed_password_example'
-)
-RETURNING *;
-INSERT INTO users (username, email, password_hash)
-VALUES (
-  'kevin_si',
-  'kevin@example.com',
-  'hashed_password_example'
-)
-RETURNING *;
+-- INSERT INTO users (username, email, password_hash)
+-- VALUES (
+--   'john_doe',
+--   'john@example.com',
+--   'hashed_password_example'
+-- )
+-- RETURNING *;
+-- INSERT INTO users (username, email, password_hash)
+-- VALUES (
+--   'marie',
+--   'marie@example.com',
+--   'hashed_password_example'
+-- )
+-- RETURNING *;
+-- INSERT INTO users (username, email, password_hash)
+-- VALUES (
+--   'simon',
+--   'simon@example.com',
+--   'hashed_password_example'
+-- )
+-- RETURNING *;
+-- INSERT INTO users (username, email, password_hash)
+-- VALUES (
+--   'petter_parker',
+--   'parker@example.com',
+--   'hashed_password_example'
+-- )
+-- RETURNING *;
+-- INSERT INTO users (username, email, password_hash)
+-- VALUES (
+--   'kevin_si',
+--   'kevin@example.com',
+--   'hashed_password_example'
+-- )
+-- RETURNING *;
