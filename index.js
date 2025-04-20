@@ -8,6 +8,8 @@ const cors = require('cors');
 
 const { sendTweet } = require('./kafka-producers/producer-tweet');
 
+const { redisClient } = require("./redis/redisClient")
+
 // App setup
 const app = express();
 const port = 3000;
@@ -77,23 +79,29 @@ app.get('/users', async (req, res) => {
 // CREATE new tweet (protected)
 app.post('/tweets', authenticateToken, async (req, res) => {
     try {
+        // save to db
         const { content } = req.body;
         const user_id = req.user.id;
         const result = await pool.query(
             'INSERT INTO tweets (user_id, content) VALUES ($1, $2) RETURNING *',
             [user_id, content]
         );
-        res.status(201).json(result.rows[0]);
+        const insertedTweet = result.rows[0];
 
+        await redisClient.set('tweet:' + insertedTweet.id, JSON.stringify(insertedTweet), { EX: 60 });
+
+        // add message to "tweets" topics kafka
         await sendTweet({
-            id: result.rows[0].id,
+            id: insertedTweet.id,
             content: content,
             author_id: user_id,
-            created_at: result.rows[0].created_at
+            created_at: insertedTweet.created_at
         });
 
+        res.status(201).json(insertedTweet);
     } catch (error) {
-        console.log(error);
+        console.error('Failed to post tweet:', err);
+        res.status(500).json({ error: 'Failed to post tweet' });
     }
 });
 
@@ -112,24 +120,33 @@ app.get('/timeline/:user_id', async (req, res) => {
 
 // FOLLOW a user (protected)
 app.post('/follow', authenticateToken, async (req, res) => {
-    const { followee_id } = req.body;
-    const follower_id = req.user.id;
-    await pool.query(
-        'INSERT INTO follows (follower_id, followee_id) VALUES ($1, $2)',
-        [follower_id, followee_id]
-    );
-    res.status(200).json({ message: 'Followed successfully.' });
+    try {
+        await pool.query(
+            'INSERT INTO follows (follower_id, followee_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+            [follower_id, followee_id]
+        );
+        await redisClient.del(`followers:${followee_id}`);
+        res.sendStatus(201);
+    } catch (err) {
+        console.error('Failed to follow user:', err);
+        res.status(500).json({ error: 'Follow failed' });
+    }
 });
 
 // UNFOLLOW a user (protected)
 app.post('/unfollow', authenticateToken, async (req, res) => {
-    const { followee_id } = req.body;
-    const follower_id = req.user.id;
-    await pool.query(
-        'DELETE FROM follows WHERE follower_id = $1 AND followee_id = $2',
-        [follower_id, followee_id]
-    );
-    res.status(200).json({ message: 'Unfollowed successfully.' });
+    const { follower_id, followee_id } = req.body;
+    try {
+        await pool.query(
+            'DELETE FROM follows WHERE follower_id = $1 AND followee_id = $2',
+            [follower_id, followee_id]
+        );
+        await redisClient.del(`followers:${followee_id}`);
+        res.sendStatus(200);
+    } catch (err) {
+        console.error('Failed to unfollow user:', err);
+        res.status(500).json({ error: 'Unfollow failed' });
+    }
 });
 
 // Likes table should exist in DB

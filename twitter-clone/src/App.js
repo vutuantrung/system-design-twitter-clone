@@ -6,7 +6,7 @@ import { CLOSING } from 'ws';
 const API = 'http://localhost:3000';
 
 function App() {
-    const consumerWS = useRef(null)
+    const consumerWS = useRef(null);
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -108,11 +108,9 @@ function App() {
         if (!userId) return;
 
         const socket = new WebSocket(`ws://localhost:8081/?userId=${userId}`);
-
         socket.onopen = (event) => {
             console.log("ws consumer is connected")
         }
-
         socket.onmessage = (event) => {
             const newTweet = JSON.parse(event.data);
             console.log('Live Tweet:', newTweet);
@@ -137,6 +135,14 @@ function App() {
         } catch (err) {
             setLoginError('Invalid email or password');
         }
+    };
+
+    const logout = () => {
+        setToken(null);
+        setUserId(null);
+        setTimeline([]);
+        setContent('');
+        setFollowId('');
     };
 
     const register = async () => {
@@ -172,14 +178,6 @@ function App() {
         );
         setFollowId('');
         loadTimeline(userId, token);
-    };
-
-    const logout = () => {
-        setToken(null);
-        setUserId(null);
-        setTimeline([]);
-        setContent('');
-        setFollowId('');
     };
 
     return (
