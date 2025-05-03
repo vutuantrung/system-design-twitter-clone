@@ -26,6 +26,7 @@ function App() {
         }
     }, [loginError]);
 
+    //// STYLES
     useEffect(() => {
         const style = document.createElement('style');
         style.innerHTML = `
@@ -103,6 +104,7 @@ function App() {
         return () => document.head.removeChild(style);
     }, []);
 
+    //// KAFKA CONSUMER WS
     useEffect(() => {
         console.log("useEffect userId", userId)
         if (!userId) return;

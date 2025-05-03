@@ -2,7 +2,7 @@ const WebSocket = require('ws');
 const { Kafka } = require('kafkajs');
 const { Pool } = require('pg');
 
-const { redisClient } = require('./redis/redisClient');
+const { redisClient } = require('../redis/redisClient');
 
 const kafkaConsumer = new Kafka({ brokers: ['localhost:9092'] });
 const consumer = kafkaConsumer.consumer({ groupId: 'tweet-consumers' });
@@ -56,7 +56,10 @@ async function startConsumer() {
 async function getFollowers(authorId) {
     const cacheKey = `followers:${authorId}`;
     const cached = await redisClient.get(cacheKey);
-    if (cached) return JSON.parse(cached);
+    if (cached) {
+        console.log("data has been cached", cached)
+        return JSON.parse(cached);
+    }
 
     const res = await pool.query(
         'SELECT follower_id FROM follows WHERE followee_id = $1',

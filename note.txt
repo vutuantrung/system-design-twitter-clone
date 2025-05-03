@@ -1,2 +1,22 @@
-# Run the command to add sql file
+
+[INSTALLATION] Run the command to add sql file
 Get-Content C:\Users\trung\Documents\CSProjects\Personal-Project\NodeJS\system-design-twitter-clone\twitter_schema.sql | docker exec -i twitter_postgres psql -U trung -d twitter_db
+
+-------------------------------------------------
+
+1. Start docker: postgres db, kafka (docker-compose)
+=> docker compose up -d
+
+2. Start the back-end (API) server
+=> node index.js
+
+3. Start the kafka-consumer ws socket
+=> node kafka-consumers\consumer-tweet.js
+
+5. Start at least 2 instance of front-end users: 
+=> cd ./twitter-clone
+=> npm start (2 instances)
+
+6. Open pgAdmin4 for manipulation of DB
+
+7. Login using trung@mail.com|123qwe & minh@mail.com|123qwe

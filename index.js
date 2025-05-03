@@ -70,55 +70,13 @@ app.post('/auth/login', async (req, res) => {
     res.json({ token });
 });
 
-// GET all users
+// Get all users
 app.get('/users', async (req, res) => {
     const result = await pool.query('SELECT * FROM users ORDER BY id');
     res.json(result.rows);
 });
 
-// CREATE new tweet (protected)
-app.post('/tweets', authenticateToken, async (req, res) => {
-    try {
-        // save to db
-        const { content } = req.body;
-        const user_id = req.user.id;
-        const result = await pool.query(
-            'INSERT INTO tweets (user_id, content) VALUES ($1, $2) RETURNING *',
-            [user_id, content]
-        );
-        const insertedTweet = result.rows[0];
-
-        await redisClient.set('tweet:' + insertedTweet.id, JSON.stringify(insertedTweet), { EX: 60 });
-
-        // add message to "tweets" topics kafka
-        await sendTweet({
-            id: insertedTweet.id,
-            content: content,
-            author_id: user_id,
-            created_at: insertedTweet.created_at
-        });
-
-        res.status(201).json(insertedTweet);
-    } catch (error) {
-        console.error('Failed to post tweet:', err);
-        res.status(500).json({ error: 'Failed to post tweet' });
-    }
-});
-
-// GET all tweets for a user (timeline-style)
-app.get('/timeline/:user_id', async (req, res) => {
-    const userId = req.params.user_id;
-    const result = await pool.query(
-        `SELECT t.* FROM tweets t
-     JOIN follows f ON f.followee_id = t.user_id
-     WHERE f.follower_id = $1
-     ORDER BY t.created_at DESC LIMIT 20`,
-        [userId]
-    );
-    res.json(result.rows);
-});
-
-// FOLLOW a user (protected)
+// Follow a user (protected)
 app.post('/follow', authenticateToken, async (req, res) => {
     try {
         await pool.query(
@@ -133,7 +91,7 @@ app.post('/follow', authenticateToken, async (req, res) => {
     }
 });
 
-// UNFOLLOW a user (protected)
+// Unfollow a user (protected)
 app.post('/unfollow', authenticateToken, async (req, res) => {
     const { follower_id, followee_id } = req.body;
     try {
@@ -149,7 +107,7 @@ app.post('/unfollow', authenticateToken, async (req, res) => {
     }
 });
 
-// Likes table should exist in DB
+// Like a user's tweet
 app.post('/like', authenticateToken, async (req, res) => {
     const { tweet_id } = req.body;
     const user_id = req.user.id;
@@ -181,6 +139,8 @@ app.post('/reply', authenticateToken, async (req, res) => {
     }
 });
 
+
+//// TWEETS APIS
 app.get('/tweets/feed/:userId', authenticateToken, async (req, res) => {
     const { userId } = req.params;
     console.log('[userId]', userId)
@@ -208,7 +168,47 @@ app.get('/tweets/feed/:userId', authenticateToken, async (req, res) => {
     }
 });
 
-// hoangsahdy|7QCRx5yp2
+// Get all tweets for a user (timeline-style)
+app.get('/timeline/:user_id', async (req, res) => {
+    const userId = req.params.user_id;
+    const result = await pool.query(
+        `SELECT t.* FROM tweets t
+     JOIN follows f ON f.followee_id = t.user_id
+     WHERE f.follower_id = $1
+     ORDER BY t.created_at DESC LIMIT 20`,
+        [userId]
+    );
+    res.json(result.rows);
+});
+
+// Create new tweet (protected)
+app.post('/tweets', authenticateToken, async (req, res) => {
+    try {
+        // save to db
+        const { content } = req.body;
+        const user_id = req.user.id;
+        const result = await pool.query(
+            'INSERT INTO tweets (user_id, content) VALUES ($1, $2) RETURNING *',
+            [user_id, content]
+        );
+        const insertedTweet = result.rows[0];
+
+        await redisClient.set('tweet:' + insertedTweet.id, JSON.stringify(insertedTweet), { EX: 60 });
+
+        // add message to "tweets" topics kafka
+        await sendTweet({
+            id: insertedTweet.id,
+            content: content,
+            author_id: user_id,
+            created_at: insertedTweet.created_at
+        });
+
+        res.status(201).json(insertedTweet);
+    } catch (error) {
+        console.error('Failed to post tweet:', err);
+        res.status(500).json({ error: 'Failed to post tweet' });
+    }
+});
 
 // Start server
 app.listen(port, () => {

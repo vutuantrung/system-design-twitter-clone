@@ -1,5 +1,5 @@
 # Use postgres/example user/password credentials
-version: '3.9'
+version: '1.0'
 
 services:
   postgres:
@@ -47,3 +47,11 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--port", "6379"]
+    restart: unless-stopped
